@@ -14,6 +14,7 @@ MAX_TMP_FILE_AGE: int = 5 * 60
 RESIZE_TIMEOUT: int = 5
 NUDE_FILTER_MAX_THRESHOLD: Optional[float] = None
 ALLOW_VIDEO: bool = False
+HIDE_UPLOAD_FORM: bool = False
 
 VALID_SIZES: list[int] = []
 

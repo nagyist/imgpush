@@ -35,6 +35,8 @@ def after_request(resp: Any) -> Any:
 
 @app.route("/", methods=["GET"])
 def root() -> str:
+    if settings.HIDE_UPLOAD_FORM:
+        return ""
     return """
 <form action="/" method="post" enctype="multipart/form-data">
     <input type="file" name="file" id="file">
