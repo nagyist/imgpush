@@ -16,6 +16,7 @@ from wand.image import Image
 
 if settings.NUDE_FILTER_MAX_THRESHOLD:
     from nudenet import NudeClassifier
+
     nude_classifier = NudeClassifier()
 else:
     nude_classifier = None
@@ -52,7 +53,8 @@ def clear_imagemagick_temp_files() -> None:
     imagemagick_temp_files = glob.glob("/tmp/magick-*")
     for filepath in imagemagick_temp_files:
         modified = datetime.datetime.strptime(
-            time.ctime(os.path.getmtime(filepath)), "%a %b %d %H:%M:%S %Y",
+            time.ctime(os.path.getmtime(filepath)),
+            "%a %b %d %H:%M:%S %Y",
         )
         diff = datetime.datetime.now() - modified
         seconds = diff.seconds
@@ -73,11 +75,7 @@ def generate_random_filename() -> str:
     if settings.NAME_STRATEGY == "uuidv4":
         return str(uuid.uuid4())
     elif settings.NAME_STRATEGY == "randomstr":
-        return "".join(
-            random.choices(
-                string.ascii_lowercase + string.digits + string.ascii_uppercase, k=5
-            )
-        )
+        return "".join(random.choices(string.ascii_lowercase + string.digits + string.ascii_uppercase, k=5))
     return ""
 
 
@@ -120,7 +118,10 @@ def resize_image(path: str, width: Union[int, str], height: Union[int, str]) -> 
     else:
         newwidth = int(img.height * desired_aspect_ratio)
         img.crop(
-            int((img.width / 2) - (newwidth / 2)), 0, width=newwidth, height=img.height,
+            int((img.width / 2) - (newwidth / 2)),
+            0,
+            width=newwidth,
+            height=img.height,
         )
 
     @timeout_decorator.timeout(settings.RESIZE_TIMEOUT, use_signals=False)
@@ -167,9 +168,7 @@ def delete_image(filename: str) -> int:
     # Also sanitize cache path - escape glob special chars in filename
     safe_filename = os.path.basename(image_path)
     filename_without_ext, extension = os.path.splitext(safe_filename)
-    cache_pattern = os.path.join(
-        settings.CACHE_DIR, f"{glob.escape(filename_without_ext)}_*x*{glob.escape(extension)}"
-    )
+    cache_pattern = os.path.join(settings.CACHE_DIR, f"{glob.escape(filename_without_ext)}_*x*{glob.escape(extension)}")
     cached_files = glob.glob(cache_pattern)
 
     for cached_file in cached_files:
@@ -198,8 +197,7 @@ def process_image(tmp_filepath: str, output_path: str, output_type: str, is_svg:
                 if output_type not in ["gif", "webp"]:
                     # Extract first frame for non-animated formats
                     first_frame = img.sequence[0]  # type: ignore
-                    with Image(image=first_frame) as first_frame_img, \
-                         first_frame_img.convert(output_type) as converted:
+                    with Image(image=first_frame) as first_frame_img, first_frame_img.convert(output_type) as converted:
                         converted.save(filename=output_path)
                 else:
                     with img.convert(output_type) as converted:

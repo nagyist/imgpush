@@ -48,16 +48,19 @@ def long_video():
 class TestGetVideoDuration:
     def test_returns_correct_duration(self, short_video):
         import video
+
         duration = video.get_video_duration(short_video)
         assert 1.9 <= duration <= 2.1  # Allow small tolerance
 
     def test_returns_correct_duration_long_video(self, long_video):
         import video
+
         duration = video.get_video_duration(long_video)
         assert 89.0 <= duration <= 91.0
 
     def test_returns_zero_for_invalid_file(self):
         import video
+
         duration = video.get_video_duration("/nonexistent/file.mp4")
         assert duration == 0.0
 
@@ -65,16 +68,19 @@ class TestGetVideoDuration:
 class TestCheckVideoDuration:
     def test_short_video_passes(self, short_video):
         import video
+
         assert video.check_video_duration(short_video) is False  # False = passes check
 
     def test_long_video_fails(self, long_video):
         import video
+
         assert video.check_video_duration(long_video) is True  # True = exceeds limit
 
 
 class TestExtractVideoFrames:
     def test_extracts_frames_at_interval(self, short_video):
         import video
+
         frames = video.extract_video_frames(short_video, interval=1.0)
         try:
             # 2-second video at 1-second interval should yield ~2-3 frames
@@ -90,6 +96,7 @@ class TestExtractVideoFrames:
 
     def test_extracts_more_frames_with_shorter_interval(self, short_video):
         import video
+
         frames = video.extract_video_frames(short_video, interval=0.5)
         try:
             # 2-second video at 0.5-second interval should yield ~4-5 frames
@@ -101,6 +108,7 @@ class TestExtractVideoFrames:
 
     def test_returns_empty_list_for_invalid_file(self):
         import video
+
         frames = video.extract_video_frames("/nonexistent/file.mp4", interval=1.0)
         assert frames == []
 
@@ -108,6 +116,7 @@ class TestExtractVideoFrames:
 class TestCheckVideoNudityFilter:
     def test_returns_false_when_filter_disabled(self, short_video, monkeypatch):
         import video
+
         monkeypatch.setattr("video.settings.NUDE_FILTER_MAX_THRESHOLD", None)
         monkeypatch.setattr("video.nude_classifier", None)
         result = video.check_video_nudity_filter(short_video)
@@ -148,8 +157,8 @@ class TestCheckVideoNudityFilter:
 
         original_extract = video.extract_video_frames
 
-        def tracking_extract(filepath: str, interval: float) -> list[str]:
-            frames = original_extract(filepath, interval)
+        def tracking_extract(filepath: str, interval: float, max_frames: int = 0) -> list[str]:
+            frames = original_extract(filepath, interval, max_frames)
             extracted_frames.extend(frames)
             return frames
 

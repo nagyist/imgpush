@@ -6,14 +6,12 @@ import pytest
 # Check if ImageMagick is available (required for app import)
 try:
     from wand.api import library  # noqa: F401
+
     IMAGEMAGICK_AVAILABLE = True
 except ImportError:
     IMAGEMAGICK_AVAILABLE = False
 
-pytestmark = pytest.mark.skipif(
-    not IMAGEMAGICK_AVAILABLE,
-    reason="ImageMagick not installed"
-)
+pytestmark = pytest.mark.skipif(not IMAGEMAGICK_AVAILABLE, reason="ImageMagick not installed")
 
 
 @pytest.fixture
@@ -22,6 +20,7 @@ def client():
     from fastapi.testclient import TestClient
 
     from app import app
+
     return TestClient(app)
 
 
@@ -60,22 +59,79 @@ class TestUploadEndpoint:
         monkeypatch.setattr("settings.NUDE_FILTER_MAX_THRESHOLD", None)
 
         # Create a minimal valid PNG (1x1 transparent pixel)
-        png_data = bytes([
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,  # PNG signature
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,  # IHDR chunk
-            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  # 1x1
-            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,  # 8-bit RGBA
-            0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,  # IDAT chunk
-            0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,  # IEND chunk
-            0x42, 0x60, 0x82
-        ])
-
-        response = client.post(
-            "/",
-            files={"file": ("test.png", png_data, "image/png")}
+        png_data = bytes(
+            [
+                0x89,
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,  # PNG signature
+                0x00,
+                0x00,
+                0x00,
+                0x0D,
+                0x49,
+                0x48,
+                0x44,
+                0x52,  # IHDR chunk
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,
+                0x01,  # 1x1
+                0x08,
+                0x06,
+                0x00,
+                0x00,
+                0x00,
+                0x1F,
+                0x15,
+                0xC4,  # 8-bit RGBA
+                0x89,
+                0x00,
+                0x00,
+                0x00,
+                0x0A,
+                0x49,
+                0x44,
+                0x41,  # IDAT chunk
+                0x54,
+                0x78,
+                0x9C,
+                0x63,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x05,
+                0x00,
+                0x01,
+                0x0D,
+                0x0A,
+                0x2D,
+                0xB4,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x49,
+                0x45,
+                0x4E,
+                0x44,
+                0xAE,  # IEND chunk
+                0x42,
+                0x60,
+                0x82,
+            ]
         )
+
+        response = client.post("/", files={"file": ("test.png", png_data, "image/png")})
         assert response.status_code == 200
         data = response.json()
         assert "filename" in data
@@ -94,10 +150,7 @@ class TestUploadEndpoint:
 
         svg_data = b'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'
 
-        response = client.post(
-            "/",
-            files={"file": ("test.svg", svg_data, "image/svg+xml")}
-        )
+        response = client.post("/", files={"file": ("test.svg", svg_data, "image/svg+xml")})
         assert response.status_code == 200
         data = response.json()
         assert "filename" in data
@@ -126,6 +179,7 @@ class TestGetImageEndpoint:
 def reset_rate_limiter():
     """Reset the rate limiter storage between tests."""
     from app import _auth_limiter
+
     _auth_limiter.storage.reset()
     yield
     _auth_limiter.storage.reset()
@@ -231,6 +285,7 @@ class TestDeleteEndpoint:
         from limits import parse as parse_limit
 
         import app as app_module
+
         app_module._failed_auth_limit = parse_limit("3/minute")
 
         # Make 3 failed attempts (should all return 403)
@@ -251,6 +306,7 @@ class TestDeleteEndpoint:
         from limits import parse as parse_limit
 
         import app as app_module
+
         app_module._failed_auth_limit = parse_limit("2/minute")
 
         # Make 2 failed attempts
@@ -274,17 +330,77 @@ class TestUploadAuth:
         monkeypatch.setattr("settings.API_KEY", "test-key")
         monkeypatch.setattr("settings.REQUIRE_API_KEY_FOR_UPLOAD", False)
 
-        png_data = bytes([
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-            0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
-            0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
-            0x42, 0x60, 0x82
-        ])
+        png_data = bytes(
+            [
+                0x89,
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,
+                0x00,
+                0x00,
+                0x00,
+                0x0D,
+                0x49,
+                0x48,
+                0x44,
+                0x52,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x08,
+                0x06,
+                0x00,
+                0x00,
+                0x00,
+                0x1F,
+                0x15,
+                0xC4,
+                0x89,
+                0x00,
+                0x00,
+                0x00,
+                0x0A,
+                0x49,
+                0x44,
+                0x41,
+                0x54,
+                0x78,
+                0x9C,
+                0x63,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x05,
+                0x00,
+                0x01,
+                0x0D,
+                0x0A,
+                0x2D,
+                0xB4,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x49,
+                0x45,
+                0x4E,
+                0x44,
+                0xAE,
+                0x42,
+                0x60,
+                0x82,
+            ]
+        )
 
         response = client.post("/", files={"file": ("test.png", png_data, "image/png")})
         assert response.status_code == 200
@@ -304,22 +420,80 @@ class TestUploadAuth:
         monkeypatch.setattr("settings.API_KEY", "test-key")
         monkeypatch.setattr("settings.REQUIRE_API_KEY_FOR_UPLOAD", True)
 
-        png_data = bytes([
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-            0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
-            0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
-            0x42, 0x60, 0x82
-        ])
+        png_data = bytes(
+            [
+                0x89,
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,
+                0x00,
+                0x00,
+                0x00,
+                0x0D,
+                0x49,
+                0x48,
+                0x44,
+                0x52,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x08,
+                0x06,
+                0x00,
+                0x00,
+                0x00,
+                0x1F,
+                0x15,
+                0xC4,
+                0x89,
+                0x00,
+                0x00,
+                0x00,
+                0x0A,
+                0x49,
+                0x44,
+                0x41,
+                0x54,
+                0x78,
+                0x9C,
+                0x63,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x05,
+                0x00,
+                0x01,
+                0x0D,
+                0x0A,
+                0x2D,
+                0xB4,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x49,
+                0x45,
+                0x4E,
+                0x44,
+                0xAE,
+                0x42,
+                0x60,
+                0x82,
+            ]
+        )
 
         response = client.post(
-            "/",
-            files={"file": ("test.png", png_data, "image/png")},
-            headers={"Authorization": "Bearer test-key"}
+            "/", files={"file": ("test.png", png_data, "image/png")}, headers={"Authorization": "Bearer test-key"}
         )
         assert response.status_code == 200
 
@@ -330,9 +504,7 @@ class TestUploadAuth:
         png_data = bytes([0x89, 0x50, 0x4E, 0x47])
 
         response = client.post(
-            "/",
-            files={"file": ("test.png", png_data, "image/png")},
-            headers={"Authorization": "Bearer wrong-key"}
+            "/", files={"file": ("test.png", png_data, "image/png")}, headers={"Authorization": "Bearer wrong-key"}
         )
         assert response.status_code == 403
         assert "Invalid API key" in response.json()["detail"]

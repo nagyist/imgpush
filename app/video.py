@@ -7,6 +7,7 @@ import settings
 
 if settings.NUDE_FILTER_MAX_THRESHOLD:
     from nudenet import NudeClassifier
+
     nude_classifier = NudeClassifier()
 else:
     nude_classifier = None
@@ -34,11 +35,16 @@ def check_video_duration(filepath: str) -> bool:
     return duration > settings.MAX_VIDEO_DURATION
 
 
-def extract_video_frames(filepath: str, interval: float) -> list[str]:
+def extract_video_frames(filepath: str, interval: float, max_frames: int = 0) -> list[str]:
     """Extract frames from video at specified interval in seconds.
 
     Returns list of temporary file paths containing extracted frames.
     Caller is responsible for cleaning up these files.
+
+    Args:
+        filepath: Path to video file.
+        interval: Interval in seconds between extracted frames.
+        max_frames: Maximum number of frames to extract. 0 means no limit.
     """
     frame_paths: list[str] = []
     cap = cv2.VideoCapture(filepath)
@@ -54,6 +60,9 @@ def extract_video_frames(filepath: str, interval: float) -> list[str]:
 
         frame_count = 0
         while True:
+            if max_frames > 0 and len(frame_paths) >= max_frames:
+                break
+
             ret, frame = cap.read()
             if not ret:
                 break
@@ -79,7 +88,17 @@ def check_video_nudity_filter(filepath: str) -> bool:
     if not settings.NUDE_FILTER_MAX_THRESHOLD or nude_classifier is None:
         return False
 
-    frame_paths = extract_video_frames(filepath, settings.NUDE_FILTER_VIDEO_INTERVAL)
+    interval = settings.NUDE_FILTER_VIDEO_INTERVAL
+    max_frames = settings.NUDE_FILTER_MAX_FRAMES
+
+    # Adjust interval to evenly distribute frames across video if max_frames is set
+    if max_frames > 0:
+        duration = get_video_duration(filepath)
+        if duration > 0:
+            min_interval_for_coverage = duration / max_frames
+            interval = max(interval, min_interval_for_coverage)
+
+    frame_paths = extract_video_frames(filepath, interval, max_frames)
 
     if not frame_paths:
         return False
