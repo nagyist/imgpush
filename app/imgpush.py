@@ -123,7 +123,7 @@ def resize_image(path: str, width: Union[int, str], height: Union[int, str]) -> 
             int((img.width / 2) - (newwidth / 2)), 0, width=newwidth, height=img.height,
         )
 
-    @timeout_decorator.timeout(settings.RESIZE_TIMEOUT)
+    @timeout_decorator.timeout(settings.RESIZE_TIMEOUT, use_signals=False)
     def resize(img: Image, width: int, height: int) -> None:
         img.sample(width, height)
 
