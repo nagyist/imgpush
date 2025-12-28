@@ -118,7 +118,7 @@ class TestCheckVideoNudityFilter:
         import video
 
         monkeypatch.setattr("video.settings.NUDE_FILTER_MAX_THRESHOLD", None)
-        monkeypatch.setattr("video.nude_classifier", None)
+        monkeypatch.setattr("video.imgpush.nude_classifier", None)
         result = video.check_video_nudity_filter(short_video)
         assert result is False
 
@@ -131,7 +131,7 @@ class TestCheckVideoNudityFilter:
                 return {fp: {"unsafe": 0.1} for fp in filepaths}
 
         monkeypatch.setattr("video.settings.NUDE_FILTER_MAX_THRESHOLD", 0.5)
-        monkeypatch.setattr("video.nude_classifier", MockClassifier())
+        monkeypatch.setattr("video.imgpush.nude_classifier", MockClassifier())
 
         result = video.check_video_nudity_filter(short_video)
         assert result is False
@@ -145,7 +145,7 @@ class TestCheckVideoNudityFilter:
                 return {fp: {"unsafe": 0.9} for fp in filepaths}
 
         monkeypatch.setattr("video.settings.NUDE_FILTER_MAX_THRESHOLD", 0.5)
-        monkeypatch.setattr("video.nude_classifier", MockClassifier())
+        monkeypatch.setattr("video.imgpush.nude_classifier", MockClassifier())
 
         result = video.check_video_nudity_filter(short_video)
         assert result is True
@@ -169,7 +169,7 @@ class TestCheckVideoNudityFilter:
 
         monkeypatch.setattr("video.extract_video_frames", tracking_extract)
         monkeypatch.setattr("video.settings.NUDE_FILTER_MAX_THRESHOLD", 0.5)
-        monkeypatch.setattr("video.nude_classifier", MockClassifier())
+        monkeypatch.setattr("video.imgpush.nude_classifier", MockClassifier())
 
         video.check_video_nudity_filter(short_video)
 

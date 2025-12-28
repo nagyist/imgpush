@@ -3,14 +3,8 @@ import os
 import tempfile
 
 import cv2
+import imgpush
 import settings
-
-if settings.NUDE_FILTER_MAX_THRESHOLD:
-    from nudenet import NudeClassifier
-
-    nude_classifier = NudeClassifier()
-else:
-    nude_classifier = None
 
 
 def get_video_duration(filepath: str) -> float:
@@ -92,7 +86,7 @@ def check_video_nudity_filter(filepath: str) -> bool:
 
     Returns True if ANY frame exceeds the nudity threshold.
     """
-    if not settings.NUDE_FILTER_MAX_THRESHOLD or nude_classifier is None:
+    if not settings.NUDE_FILTER_MAX_THRESHOLD or imgpush.nude_classifier is None:
         return False
 
     interval = settings.NUDE_FILTER_VIDEO_INTERVAL
@@ -113,7 +107,7 @@ def check_video_nudity_filter(filepath: str) -> bool:
     try:
         # Classify frames one at a time to avoid memory spikes
         for frame_path in frame_paths:
-            result = nude_classifier.classify([frame_path])
+            result = imgpush.nude_classifier.classify([frame_path])
             unsafe_val = result.get(frame_path, {}).get("unsafe", 0)
             if unsafe_val >= settings.NUDE_FILTER_MAX_THRESHOLD:
                 return True
