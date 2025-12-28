@@ -1,5 +1,4 @@
 import os
-
 import secrets
 import urllib.request
 from typing import Any, Optional
