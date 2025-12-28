@@ -71,6 +71,12 @@ def extract_video_frames(filepath: str, interval: float, max_frames: int = 0) ->
             if not ret:
                 continue
 
+            # Resize to max 480px on longest side for memory efficiency
+            h, w = frame.shape[:2]
+            if max(h, w) > 480:
+                scale = 480 / max(h, w)
+                frame = cv2.resize(frame, (int(w * scale), int(h * scale)))
+
             fd, temp_path = tempfile.mkstemp(suffix=".jpg")
             os.close(fd)
             cv2.imwrite(temp_path, frame)
@@ -105,10 +111,10 @@ def check_video_nudity_filter(filepath: str) -> bool:
         return False
 
     try:
-        # Batch classify all frames at once for better performance
-        results = nude_classifier.classify(frame_paths)
+        # Classify frames one at a time to avoid memory spikes
         for frame_path in frame_paths:
-            unsafe_val = results.get(frame_path, {}).get("unsafe", 0)
+            result = nude_classifier.classify([frame_path])
+            unsafe_val = result.get(frame_path, {}).get("unsafe", 0)
             if unsafe_val >= settings.NUDE_FILTER_MAX_THRESHOLD:
                 return True
         return False
