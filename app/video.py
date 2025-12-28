@@ -51,29 +51,30 @@ def extract_video_frames(filepath: str, interval: float, max_frames: int = 0) ->
 
     try:
         fps = cap.get(cv2.CAP_PROP_FPS)
-        if fps <= 0:
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if fps <= 0 or total_frames <= 0:
             return frame_paths
 
         frame_interval = int(fps * interval)
         if frame_interval < 1:
             frame_interval = 1
 
-        frame_count = 0
-        while True:
-            if max_frames > 0 and len(frame_paths) >= max_frames:
-                break
+        # Calculate which frames to extract
+        target_frames = list(range(0, total_frames, frame_interval))
+        if max_frames > 0:
+            target_frames = target_frames[:max_frames]
 
+        # Seek directly to each target frame instead of reading every frame
+        for frame_num in target_frames:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
             ret, frame = cap.read()
             if not ret:
-                break
+                continue
 
-            if frame_count % frame_interval == 0:
-                fd, temp_path = tempfile.mkstemp(suffix=".jpg")
-                os.close(fd)
-                cv2.imwrite(temp_path, frame)
-                frame_paths.append(temp_path)
-
-            frame_count += 1
+            fd, temp_path = tempfile.mkstemp(suffix=".jpg")
+            os.close(fd)
+            cv2.imwrite(temp_path, frame)
+            frame_paths.append(temp_path)
     finally:
         cap.release()
 
