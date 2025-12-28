@@ -1,4 +1,15 @@
 import os
+
+# Limit ONNX/OpenCV threads to available cores before any imports that load them
+_num_threads = str(os.cpu_count() or 1)
+os.environ.setdefault("OMP_NUM_THREADS", _num_threads)
+os.environ.setdefault("OPENBLAS_NUM_THREADS", _num_threads)
+os.environ.setdefault("MKL_NUM_THREADS", _num_threads)
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", _num_threads)
+os.environ.setdefault("NUMEXPR_NUM_THREADS", _num_threads)
+os.environ.setdefault("ONNXRUNTIME_INTRA_OP_NUM_THREADS", _num_threads)
+os.environ.setdefault("ONNXRUNTIME_INTER_OP_NUM_THREADS", _num_threads)
+
 import secrets
 import urllib.request
 from typing import Any, Optional
