@@ -10,7 +10,6 @@ import uuid
 from typing import Optional, Union
 
 import settings
-import timeout_decorator
 from wand.exceptions import MissingDelegateError
 from wand.image import Image
 
@@ -124,12 +123,7 @@ def resize_image(path: str, width: Union[int, str], height: Union[int, str]) -> 
             height=img.height,
         )
 
-    @timeout_decorator.timeout(settings.RESIZE_TIMEOUT, use_signals=False)
-    def resize(img: Image, width: int, height: int) -> None:
-        img.sample(width, height)
-
-    with contextlib.suppress(timeout_decorator.TimeoutError):
-        resize(img, width_int, height_int)
+    img.sample(width_int, height_int)
 
     if is_animated_webp:
         converted = img.convert("webp")
