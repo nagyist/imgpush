@@ -10,7 +10,7 @@ import settings
 import video
 from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from limits import parse as parse_limit
 from limits.storage import MemoryStorage
 from limits.strategies import FixedWindowRateLimiter
@@ -44,8 +44,13 @@ def check_auth(request: Request, authorization: Optional[str]) -> None:
 
 
 @app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> Response:
-    return Response(content="Rate limit exceeded", status_code=429)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(content={"detail": "Rate limit exceeded"}, status_code=429)
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(content={"detail": "Internal server error"}, status_code=500)
 
 
 # CORS middleware
@@ -84,8 +89,8 @@ def root() -> str:
 
 
 @app.get("/liveness")
-def liveness() -> Response:
-    return Response(status_code=200)
+def liveness() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.post("/")
