@@ -193,6 +193,9 @@ def process_image(tmp_filepath: str, output_path: str, output_type: str, is_svg:
                     with Image(image=first_frame) as first_frame_img, first_frame_img.convert(output_type) as converted:
                         converted.save(filename=output_path)
                 else:
+                    # Coalesce frames to ensure consistent dimensions for animated images
+                    # Required for WebP which doesn't support variable frame sizes
+                    img.coalesce()
                     with img.convert(output_type) as converted:
                         converted.save(filename=output_path)
     except MissingDelegateError:
