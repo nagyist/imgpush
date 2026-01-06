@@ -197,7 +197,7 @@ def get_image(
 
     filename_without_extension, extension = os.path.splitext(filename)
 
-    if (w or h) and os.path.isfile(path) and extension != ".mp4":
+    if (w or h) and os.path.isfile(path) and extension not in (".mp4", ".svg"):
         try:
             width = imgpush.get_size_from_string(w)
             height = imgpush.get_size_from_string(h)
