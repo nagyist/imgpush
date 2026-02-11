@@ -90,46 +90,50 @@ def resize_image(path: str, width: Union[int, str], height: Union[int, str]) -> 
         else:
             img = src.clone()
 
-    current_aspect_ratio = img.width / img.height
+    try:
+        current_aspect_ratio = img.width / img.height
 
-    # Convert to integers if they're strings or empty
-    width_int = int(width) if width else 0
-    height_int = int(height) if height else 0
+        # Convert to integers if they're strings or empty
+        width_int = int(width) if width else 0
+        height_int = int(height) if height else 0
 
-    if not width_int:
-        width_int = int(current_aspect_ratio * height_int)
+        if not width_int:
+            width_int = int(current_aspect_ratio * height_int)
 
-    if not height_int:
-        height_int = int(width_int / current_aspect_ratio)
+        if not height_int:
+            height_int = int(width_int / current_aspect_ratio)
 
-    desired_aspect_ratio = width_int / height_int
+        desired_aspect_ratio = width_int / height_int
 
-    # Crop the image to fit the desired AR
-    if desired_aspect_ratio > current_aspect_ratio:
-        newheight = int(img.width / desired_aspect_ratio)
-        img.crop(
-            0,
-            int((img.height / 2) - (newheight / 2)),
-            width=img.width,
-            height=newheight,
-        )
-    else:
-        newwidth = int(img.height * desired_aspect_ratio)
-        img.crop(
-            int((img.width / 2) - (newwidth / 2)),
-            0,
-            width=newwidth,
-            height=img.height,
-        )
+        # Crop the image to fit the desired AR
+        if desired_aspect_ratio > current_aspect_ratio:
+            newheight = int(img.width / desired_aspect_ratio)
+            img.crop(
+                0,
+                int((img.height / 2) - (newheight / 2)),
+                width=img.width,
+                height=newheight,
+            )
+        else:
+            newwidth = int(img.height * desired_aspect_ratio)
+            img.crop(
+                int((img.width / 2) - (newwidth / 2)),
+                0,
+                width=newwidth,
+                height=img.height,
+            )
 
-    img.sample(width_int, height_int)
+        img.sample(width_int, height_int)
 
-    if is_animated_webp:
-        converted = img.convert("webp")
+        if is_animated_webp:
+            converted = img.convert("webp")
+            img.close()
+            return converted
+
+        return img
+    except Exception:
         img.close()
-        return converted
-
-    return img
+        raise
 
 
 def check_nudity_filter(filepath: str) -> bool:

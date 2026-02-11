@@ -12,4 +12,4 @@ export NUMEXPR_NUM_THREADS=1
 echo "Starting uvicorn with $WORKERS workers"
 
 nginx
-uvicorn app:app --uds imgpush.sock --access-log --workers "$WORKERS"
+uvicorn app:app --uds imgpush.sock --access-log --workers "$WORKERS" --limit-max-requests 200
